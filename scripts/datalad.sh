@@ -12,7 +12,9 @@ function activate_gitannex {
 			module load ${_modules}
 			eval "$(conda shell.bash hook)"
 		fi
+		conda activate ${_conda_env} >/dev/null 2>&1 || eval "$(conda shell.bash hook)"
 		conda activate ${_conda_env}
+		exit_on_error_code "Failed to init git-annex conda env"
 	fi
 }
 
