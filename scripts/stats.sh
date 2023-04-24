@@ -17,6 +17,15 @@ function delete_lock {
 	rm -f .tmp/lock_stats
 }
 
+function if_empty {
+	if [[ -z "$1" ]]
+	then
+		echo -n "$2"
+	else
+		echo -n "$1"
+	fi
+}
+
 declare -a _dirs
 
 _STDIN=0
@@ -47,13 +56,16 @@ then
 fi
 
 rm -f files_count.stats
-for dir in "${_dirs[@]}"
+find "${_dirs[@]}" -type d | while read d
 do
-	echo $(find $dir -type f | wc -l; echo $dir) >> files_count.stats
-done
+	printf "%d\t%s\n" $(find "$d" -maxdepth 1 -type f | wc -l) "$d"
+done > files_count.stats
 
 rm -f disk_usage.stats
-for d in "${_dirs[@]}" ; do printf "%s\0" "${d}" ; done | du -Ls --files0-from - > disk_usage.stats
+find "${_dirs[@]}" -type d | while read d
+do
+	printf "%d\t%s\n" $(if_empty $(find "$d" -maxdepth 1 -type f | xargs -r du -c | tail -n1 | cut -f1) 0) "$d"
+done > disk_usage.stats
 
 for d in "${_dirs[@]}"
 do
