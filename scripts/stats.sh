@@ -58,13 +58,21 @@ fi
 rm -f files_count.stats
 find "${_dirs[@]}" -type d | while read d
 do
-	printf "%d\t%s\n" $(find "$d" -maxdepth 1 -type f | wc -l) "$d"
+	fc=$(find "$d" -maxdepth 1 -type f | wc -l)
+	if [[ "$fc" -ne 0 ]]
+	then
+		printf "%d\t%s\n" "$fc" "$d"
+	fi
 done > files_count.stats
 
 rm -f disk_usage.stats
 find "${_dirs[@]}" -type d | while read d
 do
-	printf "%d\t%s\n" $(if_empty $(find "$d" -maxdepth 1 -type f | xargs -r du -c | tail -n1 | cut -f1) 0) "$d"
+	du=$(find "$d" -maxdepth 1 -type f | xargs -r du -c | tail -n1 | cut -f1)
+	if [[ ! -z "$du" ]]
+	then
+		printf "%d\t%s\n" "$du" "$d"
+	fi
 done > disk_usage.stats
 
 for d in "${_dirs[@]}"
