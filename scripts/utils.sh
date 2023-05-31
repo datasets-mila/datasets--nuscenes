@@ -203,7 +203,7 @@ function list {
 		pushd "${_DATASET}" >/dev/null || exit 1
 	fi
 
-	git-annex list "$@" | grep -o " .*" | grep -Eo "[^ ]+.*"
+	git-annex list "$@" | { grep -o " .*" | grep -Eo "[^ ]+.*" || test $? = 1 ; }
 
 	if [[ ! -z "${_DATASET}" ]]
 	then
