@@ -56,7 +56,7 @@ then
 fi
 
 rm -f files_count.stats
-find "${_dirs[@]}" -type d | while read d
+find "${_dirs[@]}" -type d | sort | while read d
 do
 	fc=$(find "$d" -maxdepth 1 -type f | wc -l)
 	if [[ "$fc" -ne 0 ]]
@@ -66,7 +66,7 @@ do
 done > files_count.stats
 
 rm -f disk_usage.stats
-find "${_dirs[@]}" -type d | while read d
+find "${_dirs[@]}" -type d | sort | while read d
 do
 	du=$(find "$d" -maxdepth 1 -type f | xargs -r du -c | tail -n1 | cut -f1)
 	if [[ ! -z "$du" ]]
