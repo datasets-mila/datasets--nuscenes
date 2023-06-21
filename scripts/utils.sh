@@ -6,6 +6,31 @@ popd >/dev/null
 
 function exit_on_error_code {
 	local _ERR=$?
+	while [[ $# -gt 0 ]]
+	do
+		local _arg="$1"; shift
+		case "${_arg}" in
+			--err)
+			if [[ ${_ERR} -eq 0 ]]
+			then
+				_ERR=$1
+			fi
+			shift
+			;;
+			-h | --help)
+			if [[ "${_arg}" != "-h" ]] && [[ "${_arg}" != "--help" ]]
+			then
+				>&2 echo "Unknown option [${_arg}]"
+			fi
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
+			>&2 echo "[--err INT] use this exit code if '\$?' is 0 (optional)"
+			>&2 echo "ERROR_MESSAGE error message to print"
+			exit 1
+			;;
+			*) set -- "${_arg}" "$@"; break ;;
+		esac
+	done
+
 	if [[ ${_ERR} -ne 0 ]]
 	then
 		>&2 echo "$(tput setaf 1)ERROR$(tput sgr0): $1: ${_ERR}"
