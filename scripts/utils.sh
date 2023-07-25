@@ -171,7 +171,7 @@ function init_venv {
 
 	source "${_prefixroot}/venv/${_name}/bin/activate" || \
 	exit_on_error_code "Failed to activate ${_name} venv"
-	python3 -m pip install --no-index --upgrade pip
+	python3 -m pip install --upgrade pip
 
 	"$@"
 }
