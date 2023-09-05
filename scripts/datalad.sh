@@ -29,4 +29,10 @@ function install_datalad {
 which git-annex || activate_gitannex
 datalad --version >/dev/null 2>&1 || install_datalad
 exit_on_error_code "Failed to install datalad requirements: pip install"
+
+# Add bin to PATH
+pushd bin/ >/dev/null
+export PATH="${PATH}:${PWD}"
+popd >/dev/null
+
 datalad "$@"
