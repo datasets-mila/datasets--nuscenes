@@ -56,26 +56,20 @@ then
 fi
 
 rm -f files_count.stats
-find "${_dirs[@]}" -type d | sort | while read d
+rm -f disk_usage.stats
+find "${_dirs[@]}" -type d | sort -u | while read d
 do
 	fc=$(find "$d" -maxdepth 1 -type f | wc -l)
 	if [[ "$fc" -ne 0 ]]
 	then
-		printf "%d\t%s\n" "$fc" "$d"
+		printf "%d\t%s\n" "$fc" "$d" >>files_count.stats
 	fi
-done > files_count.stats
 
-rm -f disk_usage.stats
-find "${_dirs[@]}" -type d | sort | while read d
-do
 	du=$(find "$d" -maxdepth 1 -type f | xargs -r du -c | tail -n1 | cut -f1)
 	if [[ ! -z "$du" ]]
 	then
-		printf "%d\t%s\n" "$du" "$d"
+		printf "%d\t%s\n" "$du" "$d" >>disk_usage.stats
 	fi
-done > disk_usage.stats
 
-for d in "${_dirs[@]}"
-do
-	chmod -R a-w "$d"
+	chmod a-w "$d"/*
 done
