@@ -71,5 +71,8 @@ do
 		printf "%d\t%s\n" "$du" "$d" >>disk_usage.stats
 	fi
 
-	chmod a-w "$d"/*
+	for sd in "$d"/*
+	do
+		echo "$sd"
+	done | xargs chmod a-w
 done
