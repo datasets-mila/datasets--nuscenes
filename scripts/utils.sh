@@ -274,6 +274,121 @@ function subdatasets {
 	fi
 }
 
+function add_urls {
+	local _STDIN=0
+	while [[ $# -gt 0 ]]
+	do
+		_arg="$1"; shift
+		case "${_arg}" in
+			--stdin) local _STDIN=1 ;;
+			-h | --help)
+			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "--stdin force read 'URL FILE' pairs from stdin instead of arguments"
+			>&2 echo "'URL FILE'... STR 'URL FILE' pairs to add"
+			exit 1
+			;;
+			*) local _files_url+=("${_arg}") ;;
+		esac
+	done
+
+	if [[ ${#_files_url[@]} == 0 ]] || [[ ${_STDIN} == 1 ]]
+	then
+		while read file_url ; do echo "${file_url}" ; done
+	else
+		for file_url in "${_files_url[@]}" ; do echo "${file_url}" ; done
+	fi | git-annex addurl --fast -c annex.largefiles=anything --raw --batch --with-files
+	# Downloads should complete correctly but in multiprocesses the last git-annex
+	# step most likely fails on a BGFS with the error "rename: resource busy
+	# (Device or resource busy)"
+	! git-annex get --fast -J8
+	# Remove the last byte from each files to redownload only the last byte
+	# and prevent the "download failed: ResponseBodyTooShort" error
+	ls -l $(list) | grep -oE "\.git/[^']*" |
+		cut -d'/' -f7 | xargs -n1 -- find .git/annex/tmp/ -name |
+		while read f
+		do
+			newfsize=$(($(stat -c '%s' "${f}") - 1))
+			chmod +w "${f}"
+			truncate -s $newfsize "${f}"
+		done
+	# Retry incomplete downloads without multiprocesses
+	git-annex get --fast --incomplete
+	git-annex migrate --fast -c annex.largefiles=anything *
+}
+
+function add_files {
+	local _STDIN=0
+	local _MAX_FILES=20000
+	while [[ $# -gt 0 ]]
+	do
+		_arg="$1"; shift
+		case "${_arg}" in
+			--stdin) local _STDIN=1 ;;
+			--max-files) local _MAX_FILES="$1"; shift ;;
+			-h | --help)
+			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "--stdin force read files from stdin instead of arguments"
+			>&2 echo "FILE... STR files to add"
+			exit 1
+			;;
+			*) local _dirs+=("${_arg}") ;;
+		esac
+	done
+
+	function filter_dirs {
+		# Sort dirs
+		readarray -t _dirs < <(while read _dir ; do echo "${_dir}" ; done | \
+			sort -u)
+
+		local parent=${_dirs[0]}
+		# Remove sub-dirs
+		for (( i=1; i<${#_dirs[@]}; i++ ))
+		do
+			# if `${parent}' is a relative base of `${_dirs[i]}',
+			# so if `${_dirs[i]}' is a sub-dir of `${parent}', the
+			# output will start with a `/'
+			if [[ "$(realpath --relative-base="${parent}" -- "${_dirs[i]}")" =~ ^/ ]]
+			then
+				echo "${_dirs[i]}"
+				local parent=${_dirs[i]}
+			fi
+		done
+
+	}
+
+	# Sort directories and remove duplicates
+	readarray -t _sorted_dirs < <(
+	if [[ ${#_dirs[@]} == 0 ]] || [[ ${_STDIN} == 1 ]]
+	then
+		while read _dir ; do echo "${_dir}" ; done
+	else
+		for _dir in "${_dirs[@]}" ; do echo "${_dir}" ; done
+	fi | filter_dirs)
+
+	# Find and sort all files
+	readarray -t _files < <(
+	for _dir in "${_sorted_dirs[@]}" ; do echo "${_dir}" ; done |
+		xargs -P8 -I'{}' find "{}" -type f | sort -u)
+
+	if (( ${#_files[@]} > ${_MAX_FILES} ))
+	then
+		# Too many files to have git/git-annex handle them. .gitignore
+		# the parent directories them and compute stats instead
+		for _dir in "${_sorted_dirs[@]}" ; do echo "${_dir}" ; done |
+			tee \
+			>("${_SCRIPT_DIR}"/stats.sh) \
+			>(while read _dir
+			do
+				grep "^/?${_dir}/?$" .gitignore >/dev/null || echo "/${_dir%/}/"
+			done >>.gitignore) \
+			>/dev/null
+	else
+		# Add files to git-annex
+		for _file in "${_files[@]}" ; do echo "${_file}" ; done |
+			git-annex add --batch
+	fi
+}
+
 function unshare_mount {
 	if [[ ${EUID} -ne 0 ]]
 	then
