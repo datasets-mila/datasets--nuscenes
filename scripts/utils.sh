@@ -340,6 +340,11 @@ function add_files {
 		readarray -t _dirs < <(while read _dir ; do echo "${_dir}" ; done | \
 			sort -u)
 
+		if (( ${#_dirs[@]} > 0 ))
+		then
+			echo "${_dirs[0]}"
+		fi
+
 		local parent=${_dirs[0]}
 		# Remove sub-dirs
 		for (( i=1; i<${#_dirs[@]}; i++ ))
@@ -353,7 +358,6 @@ function add_files {
 				local parent=${_dirs[i]}
 			fi
 		done
-
 	}
 
 	# Sort directories and remove duplicates
