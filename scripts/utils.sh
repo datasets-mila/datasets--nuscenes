@@ -86,14 +86,14 @@ function init_conda_env {
 		local _arg="$1"; shift
 		case "${_arg}" in
 			--name) local _name="$1"; shift
-			echo "name = [${_name}]"
+			>&2 echo "name = [${_name}]"
 			;;
 			--prefix) local _prefixroot="$1"; shift
-			echo "prefix = [${_prefixroot}]"
+			>&2 echo "prefix = [${_prefixroot}]"
 			;;
 			--tmp) local _prefixroot="$1"; shift
 			>&2 echo "Deprecated --tmp option. Use --prefix instead."
-			echo "tmp = [${_prefixroot}]"
+			>&2 echo "tmp = [${_prefixroot}]"
 			;;
 			--) break ;;
 			-h | --help | *)
@@ -112,7 +112,12 @@ function init_conda_env {
 	local _CONDA_ENV=$CONDA_DEFAULT_ENV
 
 	# Configure conda for bash shell
-	eval "$(conda shell.bash hook)"
+	(conda activate base 2>/dev/null && conda deactivate) || \
+		eval "$(conda shell.bash hook)"
+	while [[ ! -z "$CONDA_DEFAULT_ENV" ]]
+	do
+		conda deactivate
+	done
 	if [[ ! -z ${_CONDA_ENV} ]]
 	then
 		# Stack previous conda env which gets cleared after
@@ -139,14 +144,14 @@ function init_venv {
 		local _arg="$1"; shift
 		case "${_arg}" in
 			--name) local _name="$1"; shift
-			echo "name = [${_name}]"
+			>&2 echo "name = [${_name}]"
 			;;
 			--prefix) local _prefixroot="$1"; shift
-			echo "prefix = [${_prefixroot}]"
+			>&2 echo "prefix = [${_prefixroot}]"
 			;;
 			--tmp) local _prefixroot="$1"; shift
 			>&2 echo "Deprecated --tmp option. Use --prefix instead."
-			echo "tmp = [${_prefixroot}]"
+			>&2 echo "tmp = [${_prefixroot}]"
 			;;
 			--) break ;;
 			-h | --help | *)
@@ -155,23 +160,38 @@ function init_venv {
 				>&2 echo "Unknown option [${_arg}]"
 			fi
 			>&2 echo "Options for ${FUNCNAME[0]} are:"
-			>&2 echo "--name STR venv prefix name"
+			>&2 echo "--name STR venv prefix name. If --name starts" \
+				"with cp[0-9]+/, a conda env will be created in \~ with" \
+				"a python version of [0-9].[0-9]+"
 			>&2 echo "--prefix DIR directory to hold the virtualenv prefix"
 			exit 1
 			;;
 		esac
 	done
 
+	py_env="$(echo "${_name}" | grep -Eo "^cp[0-9]+/" | cut -d"/" -f1 || echo "")"
+	if [[ ! -z "${py_env}" ]] && [[ ! -z "$(conda env list)" ]] && [[ "$(conda env list | grep "\*" | cut -d" " -f1)" != "${py_env}" ]]
+	then
+		py_version=${py_env/#cp/}
+		py_version=${py_version:0:1}.${py_version:1}
+		init_conda_env --name "${py_env}" --prefix ~ --
+		if [[ "$(python3 --version | cut -d" " -f2 | cut -d"." -f-2)" != "${py_version}" ]] || [[ ! $(python3 -m virtualenv --version) ]]
+		then
+			conda install python=${py_version} pip virtualenv || \
+			exit_on_error_code "Failed to install python=${py_version} in conda env"
+		fi
+	fi
+
 	if [[ ! -d "${_prefixroot}/venv/${_name}/" ]]
 	then
 		mkdir -p "${_prefixroot}/venv/${_name}/" && \
-		python3 -m venv "${_prefixroot}/venv/${_name}/" || \
+		python3 -m virtualenv --no-download "${_prefixroot}/venv/${_name}/" || \
 		exit_on_error_code "Failed to create ${_name} venv"
 	fi
 
 	source "${_prefixroot}/venv/${_name}/bin/activate" || \
 	exit_on_error_code "Failed to activate ${_name} venv"
-	python3 -m pip install --upgrade pip
+	python3 -m pip install --no-index --upgrade pip
 
 	"$@"
 }
