@@ -294,6 +294,42 @@ function subdatasets {
 	fi
 }
 
+function rclone_copy {
+	while [[ $# -gt 0 ]]
+	do
+		local _arg="$1"; shift
+		case "${_arg}" in
+			--remote) local _REMOTE="$1"; shift
+			echo "remote = [${_REMOTE}]"
+			;;
+			--root) local _GDRIVE_DIR_ID="$1"; shift
+			echo "root = [${_GDRIVE_DIR_ID}]"
+			;;
+			-h | --help)
+			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "--root GDRIVE_DIR_ID Google Drive root directory id"
+			exit 1
+			;;
+			--) break ;;
+			*) >&2 echo "Unknown option [${_arg}]"; exit 3 ;;
+		esac
+	done
+
+	for _src_w_dest in "$@"
+	do
+		local _src_w_dest=(${_src_w_dest[@]})
+		local _src=${_src_w_dest[0]}
+		local _dest=${_src_w_dest[1]}
+		if [[ -z ${_GDRIVE_DIR_ID} ]]
+		then
+			rclone backend copyid ${_REMOTE}: ${_src} ${_dest}
+		else
+			rclone copy --progress --create-empty-src-dirs --copy-links \
+				--drive-root-folder-id=${_GDRIVE_DIR_ID} ${_REMOTE}:${_src} ${_dest}
+		fi
+	done
+}
+
 function add_urls {
 	local _STDIN=0
 	while [[ $# -gt 0 ]]
@@ -337,16 +373,19 @@ function add_urls {
 }
 
 function add_files {
+	local _NO_ANNEX=0
 	local _STDIN=0
 	local _MAX_FILES=20000
 	while [[ $# -gt 0 ]]
 	do
 		_arg="$1"; shift
 		case "${_arg}" in
+			--no-annex) local _NO_ANNEX=1 ;;
 			--stdin) local _STDIN=1 ;;
 			--max-files) local _MAX_FILES="$1"; shift ;;
 			-h | --help)
 			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "--no-annex do not add files under git-annex"
 			>&2 echo "--stdin force read files from stdin instead of arguments"
 			>&2 echo "FILE... STR files to add"
 			exit 1
@@ -389,12 +428,15 @@ function add_files {
 		for _dir in "${_dirs[@]}" ; do echo "${_dir}" ; done
 	fi | filter_dirs)
 
-	# Find and sort all files
-	readarray -t _files < <(
-	for _dir in "${_sorted_dirs[@]}" ; do echo "${_dir}" ; done |
-		xargs -P8 -I'{}' find "{}" -type f | sort -u)
+	if (( ${_NO_ANNEX} != 1 ))
+	then
+		# Find and sort all files
+		readarray -t _files < <(
+		for _dir in "${_sorted_dirs[@]}" ; do echo "${_dir}" ; done |
+			xargs -P8 -I'{}' find "{}" -type f | sort -u)
+	fi
 
-	if (( ${#_files[@]} > ${_MAX_FILES} ))
+	if (( ${_NO_ANNEX} == 1 )) || (( ${#_files[@]} > ${_MAX_FILES} ))
 	then
 		# Too many files to have git/git-annex handle them. .gitignore
 		# the parent directories them and compute stats instead

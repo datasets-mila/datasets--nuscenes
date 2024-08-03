@@ -55,6 +55,11 @@ then
 	readarray -t _dirs
 fi
 
+if [[ ${#_dirs[@]} == 0 ]]
+then
+	exit 0
+fi
+
 rm -f files_count.stats
 rm -f disk_usage.stats
 find "${_dirs[@]}" -type d | sort -u | while read d
