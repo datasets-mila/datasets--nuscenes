@@ -436,7 +436,7 @@ function add_files {
 			xargs -P8 -I'{}' find "{}" -type f | sort -u)
 	fi
 
-	if (( ${_NO_ANNEX} == 1 )) || (( ${#_files[@]} > ${_MAX_FILES} ))
+	if (( ${_NO_ANNEX} == 1 )) || (( ${#_files[@]} > ${_MAX_FILES} ))
 	then
 		# Too many files to have git/git-annex handle them. .gitignore
 		# the parent directories them and compute stats instead
