@@ -76,8 +76,6 @@ do
 		printf "%d\t%s\n" "$du" "$d" >>disk_usage.stats
 	fi
 
-	for sd in "$d"/*
-	do
-		echo "$sd"
-	done | xargs chmod a-w
+	find "$d" -maxdepth 1 -type f | xargs chmod a-w "$d"
+	find "$d" -maxdepth 1 -type d | xargs chmod ug+w "$d"
 done
