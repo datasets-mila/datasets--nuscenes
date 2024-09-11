@@ -441,13 +441,12 @@ function add_files {
 		# Too many files to have git/git-annex handle them. .gitignore
 		# the parent directories them and compute stats instead
 		for _dir in "${_sorted_dirs[@]}" ; do echo "${_dir}" ; done |
-			tee \
-			>("${_SCRIPT_DIR}"/stats.sh) \
+			tee -i \
 			>(while read _dir
 			do
-				grep "^/?${_dir}/?$" .gitignore >/dev/null || echo "/${_dir%/}/"
-			done >>.gitignore) \
-			>/dev/null
+				grep -E "^/?${_dir}/?$" .gitignore >/dev/null || echo "/${_dir%/}/"
+			done >>.gitignore) |
+			"${_SCRIPT_DIR}"/stats.sh
 	else
 		# Add files to git-annex
 		for _file in "${_files[@]}" ; do echo "${_file}" ; done |
