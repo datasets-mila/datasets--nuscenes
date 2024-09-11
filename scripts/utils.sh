@@ -227,6 +227,7 @@ function print_annex_checksum {
 }
 
 function list {
+	local _DATASET=
 	while [[ $# -gt 0 ]]
 	do
 		local _arg="$1"; shift
@@ -295,6 +296,8 @@ function subdatasets {
 }
 
 function rclone_copy {
+	local _REMOTE=
+	local _GDRIVE_DIR_ID=
 	while [[ $# -gt 0 ]]
 	do
 		local _arg="$1"; shift
