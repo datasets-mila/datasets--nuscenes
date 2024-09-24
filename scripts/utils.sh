@@ -81,6 +81,8 @@ function enhanced_getopt {
 }
 
 function init_conda_env {
+	local _name=
+	local _prefixroot=
 	while [[ $# -gt 0 ]]
 	do
 		local _arg="$1"; shift
@@ -139,6 +141,8 @@ function init_conda_env {
 }
 
 function init_venv {
+	local _name=
+	local _prefixroot=
 	while [[ $# -gt 0 ]]
 	do
 		local _arg="$1"; shift
@@ -189,7 +193,9 @@ function init_venv {
 		exit_on_error_code "Failed to create ${_name} venv"
 	fi
 
-	source "${_prefixroot}/venv/${_name}/bin/activate" || \
+	# _OLD_VIRTUAL_PATH= hacks deactivate and prevent reverting to an
+	# _OLD_VIRTUAL_PATH pre init_conda_env
+	_OLD_VIRTUAL_PATH= source "${_prefixroot}/venv/${_name}/bin/activate" || \
 	exit_on_error_code "Failed to activate ${_name} venv"
 	python3 -m pip install --no-index --upgrade pip
 
