@@ -2,9 +2,9 @@
 
 _SCRIPT_DIR=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)
 
-git -C "${_SCRIPT_DIR[0]}/.." submodule status | grep -Ev "^-.*\.datasets_utils.*" || \
-	git -C "${_SCRIPT_DIR[0]}/.." submodule update .datasets_utils
-_DATASETS_UTILS=$(cd "${_SCRIPT_DIR[0]}/../.datasets_utils" && pwd -P)
+_DATASETS_UTILS=$(git -C "${_SCRIPT_DIR}" rev-parse --show-toplevel)/.datasets_utils
+git -C "${_DATASETS_UTILS}/.." submodule status | grep -Ev "^-.*\.datasets_utils.*" || \
+	git -C "${_DATASETS_UTILS}/.." submodule update --init .datasets_utils
 
 source "${_DATASETS_UTILS}/utils.sh" echo -n
 
