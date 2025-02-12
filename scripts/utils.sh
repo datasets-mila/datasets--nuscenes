@@ -16,7 +16,7 @@ function print_annex_checksum {
 		case "${_arg}" in
 			-c | --checksum) local _CHECKSUM="$1"; shift ;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "[-c | --checksum CHECKSUM] checksum to print (default: MD5)"
 			exit 1
 			;;
@@ -46,7 +46,7 @@ function list {
 		case "${_arg}" in
 			-d | --dataset) local _DATASET="$1"; shift ;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "[-d | --dataset PATH] dataset location"
 			git-annex list --help >&2
 			exit 1
@@ -77,7 +77,7 @@ function subdatasets {
 		case "${_arg}" in
 			--var) local _VAR=1 ;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "--var also list datasets variants"
 			>&2 echo "then following --"
 			datalad subdatasets --help
@@ -121,7 +121,7 @@ function rclone_copy {
 			echo "root = [${_GDRIVE_DIR_ID}]"
 			;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "--root GDRIVE_DIR_ID Google Drive root directory id"
 			exit 1
 			;;
@@ -153,7 +153,7 @@ function add_urls {
 		case "${_arg}" in
 			--stdin) local _STDIN=1 ;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "--stdin force read 'URL FILE' pairs from stdin instead of arguments"
 			>&2 echo "'URL FILE'... STR 'URL FILE' pairs to add"
 			exit 1
@@ -199,7 +199,7 @@ function add_files {
 			--stdin) local _STDIN=1 ;;
 			--max-files) local _MAX_FILES="$1"; shift ;;
 			-h | --help)
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "--no-annex do not add files under git-annex"
 			>&2 echo "--stdin force read files from stdin instead of arguments"
 			>&2 echo "FILE... STR files to add"
@@ -299,7 +299,7 @@ function unshare_mount {
 			then
 				>&2 echo "Unknown option [${_arg}]"
 			fi
-			>&2 echo "Options for $(basename "$0") are:"
+			>&2 echo "Options for ${FUNCNAME[0]} are:"
 			>&2 echo "[--dir DIR] mount location"
 			>&2 echo "[--src DIR] source dir (optional)"
 			exit 1
@@ -389,7 +389,7 @@ function jug_exec {
 # 			then
 # 				>&2 echo "Unknown option [${_arg}]"
 # 			fi
-# 			>&2 echo "Options for $(basename "$0") are:"
+# 			>&2 echo "Options for ${FUNCNAME[0]} are:"
 # 			>&2 echo "[--upper DIR] upper mount overlay"
 # 			>&2 echo "[--wd DIR] overlay working directory"
 # 			>&2 echo "[--src DIR] lower mount overlay (optional)"
