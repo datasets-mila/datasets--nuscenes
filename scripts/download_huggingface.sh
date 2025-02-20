@@ -62,6 +62,8 @@ else
 	unset _NAME
 fi
 
+[[ -d "hf_home/" ]] && chmod -R u+w hf_home/
+
 HF_HOME=$PWD/hf_home scripts/python3.sh -c "
 ${_LOGIN}
 import datasets
