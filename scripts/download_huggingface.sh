@@ -14,7 +14,10 @@ _HELP=$(
 	echo -n "[--login] the dataset requires to login before download. If "
 	echo -n "\$HF_TOKEN or \$HF_TOKEN_PATH are not set, an interactive "
 	echo    "prompt will be used to login"
+	echo    "--retry INT retry attempts before giving up"
 )
+
+_RETRY=0
 
 while [[ $# -gt 0 ]]
 do
@@ -24,6 +27,7 @@ do
 		--revision) _REVISION="$1"; shift ;;
 		--name) _NAME="$1"; shift ;;
 		--login) _LOGIN=1 ;;
+		--retry) _RETRY=$1; shift ;;
 		-h | --help)
 		>&2 echo "${_HELP}"
 		exit 1
@@ -64,11 +68,17 @@ fi
 
 [[ -d "hf_home/" ]] && chmod -R u+w hf_home/
 
-HF_HOME=$PWD/hf_home scripts/python3.sh -c "
+_RETRY=$((_RETRY+1))
+
+while [[ $_RETRY -gt 0 ]]
+do
+	_RETRY=$((_RETRY-1))
+	HF_HOME=$PWD/hf_home scripts/python3.sh -c "
 ${_LOGIN}
 import datasets
 datasets.load_dataset('${_DATASET}'${_NAME}, revision='${_REVISION}', keep_in_memory=False)
-"
+" && _RETRY=0
+done
 
 # Remove cached source data
 rm -rf hf_home/{hub/,modules/,stored_tokens,token}
