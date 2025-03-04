@@ -2,5 +2,6 @@
 *.jugdata/
 /.tmp/
 /logs/
+/bin/aws-cli/
 /bin/git-lfs-linux-amd64-v*/
 /scripts/nuscenes_config
